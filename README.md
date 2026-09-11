@@ -9,9 +9,10 @@ Jellyfin に保存するプラグイン。
 ## 現状
 
 公式 Spotify Web API による検索・ID 引きと、曲・アルバム・アーティストの
-メタデータ取得、アルバム・アーティストの画像取得まで実装済み。Web Player の内部
-GraphQL 検索経路も実装しているが、匿名 token bootstrap は Spotify の非公開 TOTP 材料に
-依存するため、安全に取得できる実装が追加されるまでは利用できない。
+メタデータ取得、アルバム・アーティストの画像取得まで実装済み。Web Player 方式では、
+既知 ID を公開 entity ページの `initialState` JSON から匿名取得できる。内部 GraphQL の
+検索経路は実装済みだが、匿名 token bootstrap は Spotify の非公開 TOTP 材料に依存するため
+現時点では利用できない。
 
 | 層 | 状態 |
 | --- | --- |
@@ -25,6 +26,7 @@ GraphQL 検索経路も実装しているが、匿名 token bootstrap は Spotif
 | スロットル（直列化・間隔・429 のクールダウン） | 動く |
 | Album / Artist / Song metadata provider | 動く |
 | Album / Artist image provider | 動く |
+| Web Player の既知 ID 引き | 動く（公開 entity page の埋込 JSON） |
 | Web Player GraphQL 検索 adapter | 実装済み（匿名 session bootstrap は未実装） |
 
 Web Player が内部利用する検索 API の 2026-09-11 時点の静的解析結果は
@@ -36,7 +38,8 @@ Web Player が内部利用する検索 API の 2026-09-11 時点の静的解析�
 設定画面の catalog source で **Official Web API** を選ぶ。[Spotify Developer
 Dashboard][dashboard] でアプリを作り、Client ID と Client secret を入力する。プラグインは
 [Client Credentials flow][client-credentials] を使う。Web Player は実験的な選択肢だが、
-現時点では匿名 session bootstrap が未実装のため実用できない。
+現時点では既知 ID の取得だけに利用でき、名前による検索は匿名 session bootstrap が
+未実装のため利用できない。
 
 - 読むのは公開カタログだけなので、リスナーのログインや OAuth コールバックは不要
 - refresh token は無い。約 1 時間の access token を期限の 1 分前に取り直す

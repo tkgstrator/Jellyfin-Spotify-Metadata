@@ -46,6 +46,8 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
             CreateHttpClient(provider),
             provider.GetRequiredService<IWebPlaySessionProvider>(),
             provider.GetRequiredService<ILogger<WebPlayTransport>>()));
+        serviceCollection.AddSingleton<IWebPlayEntityTransport>(provider => new WebPlayEntityTransport(
+            CreateHttpClient(provider)));
 
         serviceCollection.AddSingleton<ISpotifyCatalog>(provider => new SpotifyCatalogResolver(
             new SpotifyCatalog(
@@ -54,6 +56,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
                 provider.GetRequiredService<ILogger<SpotifyCatalog>>()),
             new WebPlayCatalog(
                 provider.GetRequiredService<IWebPlayTransport>(),
+                provider.GetRequiredService<IWebPlayEntityTransport>(),
                 CurrentOptions,
                 provider.GetRequiredService<ILogger<WebPlayCatalog>>()),
             CurrentCatalogSource));

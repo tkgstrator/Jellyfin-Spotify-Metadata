@@ -59,6 +59,18 @@ GraphQL response の検索結果は操作に応じて次の field に入る。
 ページングでは `pagingInfo.nextOffset` を次の offset として使う。項目の識別子が Spotify
 URI（例: `spotify:track:...`）で返る箇所では、末尾の segment を Spotify ID として抽出する。
 
+## 公開 entity ページによる ID 引き
+
+2026-09-11 の実測では、ログインや cookie なしで
+`https://open.spotify.com/{track|album|artist}/{id}` を取得できた。HTML 内の
+`<script id="initialState" type="text/plain">` は Base64 エンコードされた JSON であり、
+`entities.items["spotify:{type}:{id}"]` に対象 entity のメタデータが入る。
+
+プラグインは表示 DOM を解析せず、この script を厳密に1つだけ抽出して期待 URI と完全一致
+する entity を読む。Track、Album、Artist の既知 ID 引きはこの匿名経路で実通信を確認した。
+HTML と埋込 JSON の schema は公開契約ではないため、欠落や変更は not found ではなく
+protocol error として扱う。
+
 ## 安定性と実装上の注意
 
 この経路は公開仕様ではない。少なくとも次の要素は予告なく変わり得る。
@@ -71,17 +83,17 @@ URI（例: `spotify:track:...`）で返る箇所では、末尾の segment を S
 
 したがって値を永続的な契約として扱わず、失敗時にどの段階が変化したかを切り分けられる
 ようにする。静的解析を再実行するときも、巨大な bundle や secret の実値を成果物として
-保存しない。HTML の DOM を検索結果の取得元としてスクレイピングせず、Web Player が使う
-JSON API の通信だけを対象とする。
+保存しない。検索では Web Player が使う JSON API の通信だけを対象とする。既知 ID 引きで
+公開 entity ページを取得するときも、表示 DOM ではなく `initialState` の JSON だけを読む。
 
 ## プラグイン実装上の制約
 
 設定で Web Player を明示的に選択した場合だけこの経路を使い、公式 API との自動
-fallback は行わない。token bootstrap は公開文書だけでは TOTP の難読化材料を安全に再現
-できないため、プラグインには session provider の境界だけを用意し、既定実装は必要な
-anonymous access token と動的 client version が供給されていないことを明示して失敗する。
+fallback は行わない。既知 ID 引きは公開 entity ページを匿名で取得するため token は不要。
+検索の token bootstrap は、公開文書だけでは TOTP の難読化材料を安全に再現できないため、
+プラグインには session provider の境界だけを用意し、既定実装は必要な anonymous access
+token と動的 client version が供給されていないことを明示して失敗する。
 
-確認済みの persisted operation は検索 3 種だけである。ID lookup 用の operation/hash は
-推測せず、Web Player catalog の ID lookup は対象 ID を検索語にして検索し、URI から抽出した
-ID が完全一致した結果だけを返す。このため、対象が検索結果に現れなければ ID が有効でも
-not found になる。また検索結果には完全な album track list など ID lookup 固有の情報がない。
+確認済みの persisted operation は検索 3 種だけで、ID lookup 用の operation/hash は推測
+しない。ID lookup には公開 entity ページを使う。検索結果と entity ページの schema は別々の
+adapter で同じ canonical model に変換する。

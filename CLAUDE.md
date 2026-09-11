@@ -16,10 +16,14 @@ Jellyfin に保存するプラグイン。
 
 ## 決定済みの設計（勝手に変えない）
 
-1. **取得元は Spotify Web API。** 認証は Client Credentials flow。
-   `SpotifyTokenProvider` がトークンを 1 分早く更新し、`SpotifyTransport` が bearer
-   token を付ける。401 は token を捨てて 1 回だけ再試行、403 は認証エラー、429 は
-   `Retry-After` を `CatalogRateLimitedException` に載せる。
+1. **取得元は設定で明示選択する。自動フォールバックはしない。**
+   - **Official** — Spotify Web API を Client Credentials flow で使う。
+     `SpotifyTokenProvider` がトークンを 1 分早く更新し、`SpotifyTransport` が bearer
+     token を付ける。401 は token を捨てて 1 回だけ再試行、403 は認証エラー、429 は
+     `Retry-After` を `CatalogRateLimitedException` に載せる。
+   - **WebPlay** — 既知 ID は公開 entity ページの `initialState` JSON を匿名で読む。
+     検索は Web Player 内部の Pathfinder GraphQL を使うが、匿名 session bootstrap は
+     未実装なので現時点では利用できない。
 2. **資格情報を配布物・リポジトリに入れない。** Client ID / secret は利用者が
    Spotify Developer Dashboard で作り、Jellyfin の設定画面に入れる。
 3. **Spotify ID は世界共通。** Market（既定 `JP`）は availability と track relinking
@@ -79,10 +83,10 @@ Spotify は `Retry-After` を返すので、Apple 版の推測 cooldown より�
 **アートワークは固定 URL の配列。** URL template ではない。`ArtworkSelector` が
 設定サイズに最も近い image を選ぶ。音声ファイルには埋め込まない。
 
-**Web Player の検索経路は非公開仕様。** 2026-09-11 の静的解析結果は
-[docs/research/webplay-search.md](docs/research/webplay-search.md) に記録した。persisted-query
-hash、TOTP、schema、header、client version は変更され得る。巨大 bundle や secret の
-実値は保存しない。
+**Web Player の経路は非公開仕様。** 2026-09-11 の静的解析と実測結果は
+[docs/research/webplay-search.md](docs/research/webplay-search.md) に記録した。既知 ID は公開
+entity ページ内の `initialState` JSON から取得する。検索の persisted-query hash、TOTP、
+schema、header、client version は変更され得る。巨大 bundle や secret の実値は保存しない。
 
 ## ビルド・テスト
 
@@ -123,7 +127,8 @@ Conventional Commits。header 128 文字まで。type は
 - Spotify の Client ID / secret、access token、利用者の credential をコミットしない。
 - 利用者のログインを要求しない。公開カタログに Client Credentials で届かない機能は、
   人間に相談してから authorization code flow を検討する。
-- HTML スクレイピングをしない。公式 Web API を使う。
+- Web Player の表示 DOM をスクレイピングしない。既知 ID の取得で HTML を使う場合も、
+  `initialState` script に埋め込まれた JSON だけを厳密に抽出する。
 - Jellyfin runtime assemblies、`dist/`, `bin/`, `obj/`, `media/` をコミットしない。
 
 [apple]: https://github.com/tkgstrator/Jellyfin-AppleMusic-Metadata

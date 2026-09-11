@@ -28,22 +28,42 @@ public class WebPlayCatalogTests
     }
 
     [Fact]
-    public async Task IdLookupReturnsOnlyExactSearchMatch()
+    public async Task IdLookupUsesEntityTransportWithoutSearching()
     {
-        var transport = new FixtureTransport(
-            """{"data":{"searchV2":{"artists":{"items":[{"data":{"uri":"spotify:artist:other","profile":{"name":"Other"}}},{"data":{"uri":"spotify:artist:wanted","profile":{"name":"Wanted"}}}],"pagingInfo":{}}}}}""");
-        var catalog = CreateCatalog(transport, 25);
+        var searchTransport = new FixtureTransport();
+        var entityTransport = new FixtureEntityTransport(
+            """{"entities":{"items":{"spotify:artist:wanted":{"uri":"spotify:artist:wanted","profile":{"name":"Wanted"},"visuals":{"avatarImage":{"sources":[{"url":"https://example.com/artist.jpg","width":640,"height":640}]}}}}}}""");
+        var catalog = CreateCatalog(searchTransport, 25, entityTransport);
 
         var result = await catalog.GetArtistAsync("wanted", CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal("wanted", result.Id);
-        Assert.Equal("wanted", transport.Terms.Single());
-        Assert.Equal("searchArtists", transport.Operations.Single());
+        Assert.Equal("Wanted", result.Name);
+        Assert.Empty(searchTransport.Operations);
+        Assert.Equal([("artist", "wanted")], entityTransport.Requests);
     }
 
-    private static WebPlayCatalog CreateCatalog(IWebPlayTransport transport, int maximum)
-        => new(transport, () => new CatalogOptions { MaxSearchResults = maximum }, NullLogger<WebPlayCatalog>.Instance);
+    private static WebPlayCatalog CreateCatalog(
+        IWebPlayTransport transport,
+        int maximum,
+        IWebPlayEntityTransport? entityTransport = null)
+        => new(
+            transport,
+            entityTransport ?? new FixtureEntityTransport(null),
+            () => new CatalogOptions { MaxSearchResults = maximum },
+            NullLogger<WebPlayCatalog>.Instance);
+
+    private sealed class FixtureEntityTransport(string? response) : IWebPlayEntityTransport
+    {
+        public List<(string EntityType, string Id)> Requests { get; } = [];
+
+        public Task<string?> GetAsync(string entityType, string id, CancellationToken cancellationToken)
+        {
+            Requests.Add((entityType, id));
+            return Task.FromResult(response);
+        }
+    }
 
     private sealed class FixtureTransport(params string[] responses) : IWebPlayTransport
     {

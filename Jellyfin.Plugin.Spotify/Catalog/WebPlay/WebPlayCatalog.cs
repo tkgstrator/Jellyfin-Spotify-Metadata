@@ -10,12 +10,11 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.Spotify.Catalog.WebPlay;
 
 /// <summary>
-/// Reads Spotify search results through the unsupported public Web Player endpoint.
+/// Reads Spotify catalog data through unsupported public Web Player endpoints.
 /// </summary>
 /// <remarks>
-/// Only search operations observed in the public Web Player are used. No direct
-/// lookup operation is guessed: identifier lookup searches for the identifier and
-/// returns only an exact URI-derived identifier match.
+/// Search uses the GraphQL endpoint. Identifier lookup reads the public entity
+/// page's embedded initial-state JSON.
 /// </remarks>
 public sealed class WebPlayCatalog : ISpotifyCatalog
 {
@@ -35,21 +34,25 @@ public sealed class WebPlayCatalog : ISpotifyCatalog
     public const string SearchArtistsHash = "270905851ba5c7faca81cfe053c2dbd8ceb4f156a0e0ef4b385af75ab69ffd13";
 
     private readonly IWebPlayTransport _transport;
+    private readonly IWebPlayEntityTransport _entityTransport;
     private readonly Func<CatalogOptions> _options;
     private readonly ILogger<WebPlayCatalog> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WebPlayCatalog"/> class.
     /// </summary>
-    /// <param name="transport">GraphQL transport.</param>
+    /// <param name="transport">GraphQL search transport.</param>
+    /// <param name="entityTransport">Public entity-page transport.</param>
     /// <param name="options">Supplies current catalog options.</param>
     /// <param name="logger">Logger.</param>
     public WebPlayCatalog(
         IWebPlayTransport transport,
+        IWebPlayEntityTransport entityTransport,
         Func<CatalogOptions> options,
         ILogger<WebPlayCatalog> logger)
     {
         _transport = transport;
+        _entityTransport = entityTransport;
         _options = options;
         _logger = logger;
     }
@@ -68,19 +71,20 @@ public sealed class WebPlayCatalog : ISpotifyCatalog
 
     /// <inheritdoc />
     public Task<Track?> GetSongAsync(string id, CancellationToken cancellationToken)
-        => FindByIdAsync(id, SearchSongsAsync, cancellationToken);
+        => GetEntityAsync(id, "track", WebPlayEntityAdapter.ReadTrack, cancellationToken);
 
     /// <inheritdoc />
     public Task<Album?> GetAlbumAsync(string id, CancellationToken cancellationToken)
-        => FindByIdAsync(id, SearchAlbumsAsync, cancellationToken);
+        => GetEntityAsync(id, "album", WebPlayEntityAdapter.ReadAlbum, cancellationToken);
 
     /// <inheritdoc />
     public Task<Artist?> GetArtistAsync(string id, CancellationToken cancellationToken)
-        => FindByIdAsync(id, SearchArtistsAsync, cancellationToken);
+        => GetEntityAsync(id, "artist", WebPlayEntityAdapter.ReadArtist, cancellationToken);
 
-    private static async Task<T?> FindByIdAsync<T>(
+    private async Task<T?> GetEntityAsync<T>(
         string id,
-        Func<string, CancellationToken, Task<IReadOnlyList<T>>> search,
+        string entityType,
+        Func<string, string, T> read,
         CancellationToken cancellationToken)
         where T : class
     {
@@ -89,18 +93,9 @@ public sealed class WebPlayCatalog : ISpotifyCatalog
             return null;
         }
 
-        var results = await search(id, cancellationToken).ConfigureAwait(false);
-        return results.FirstOrDefault(item => string.Equals(GetId(item), id, StringComparison.Ordinal));
+        var json = await _entityTransport.GetAsync(entityType, id, cancellationToken).ConfigureAwait(false);
+        return json is null ? null : read(json, id);
     }
-
-    private static string? GetId<T>(T item)
-        => item switch
-        {
-            Track track => track.Id,
-            Album album => album.Id,
-            Artist artist => artist.Id,
-            _ => null,
-        };
 
     private async Task<IReadOnlyList<T>> SearchAsync<T>(
         string term,

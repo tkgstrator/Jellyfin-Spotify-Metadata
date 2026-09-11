@@ -73,3 +73,15 @@ URI（例: `spotify:track:...`）で返る箇所では、末尾の segment を S
 ようにする。静的解析を再実行するときも、巨大な bundle や secret の実値を成果物として
 保存しない。HTML の DOM を検索結果の取得元としてスクレイピングせず、Web Player が使う
 JSON API の通信だけを対象とする。
+
+## プラグイン実装上の制約
+
+設定で Web Player を明示的に選択した場合だけこの経路を使い、公式 API との自動
+fallback は行わない。token bootstrap は公開文書だけでは TOTP の難読化材料を安全に再現
+できないため、プラグインには session provider の境界だけを用意し、既定実装は必要な
+anonymous access token と動的 client version が供給されていないことを明示して失敗する。
+
+確認済みの persisted operation は検索 3 種だけである。ID lookup 用の operation/hash は
+推測せず、Web Player catalog の ID lookup は対象 ID を検索語にして検索し、URI から抽出した
+ID が完全一致した結果だけを返す。このため、対象が検索結果に現れなければ ID が有効でも
+not found になる。また検索結果には完全な album track list など ID lookup 固有の情報がない。

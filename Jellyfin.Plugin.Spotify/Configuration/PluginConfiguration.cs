@@ -16,6 +16,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public PluginConfiguration()
     {
+        CatalogSource = CatalogSource.Official;
         ClientId = string.Empty;
         ClientSecret = string.Empty;
         Market = "JP";
@@ -29,6 +30,11 @@ public class PluginConfiguration : BasePluginConfiguration
         MaxCacheMemoryMegabytes = 64;
         MaxPersistedEntryKilobytes = 8;
     }
+
+    /// <summary>
+    /// Gets or sets the explicitly selected catalog source. Sources never fall back automatically.
+    /// </summary>
+    public CatalogSource CatalogSource { get; set; }
 
     /// <summary>
     /// Gets or sets the client id of the Spotify application the plugin calls

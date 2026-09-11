@@ -11,6 +11,18 @@
             <div class="content-primary">
                 <form id="SpotifyConfigForm">
                     <h2>Spotify API</h2>
+                    <div class="selectContainer">
+                        <label class="selectLabel" for="CatalogSource">Catalog source</label>
+                        <select id="CatalogSource" name="CatalogSource" is="emby-select">
+                            <option value="Official">Official Web API</option>
+                            <option value="WebPlay">Web Player (experimental)</option>
+                        </select>
+                        <div class="fieldDescription">
+                            The selected source is used exclusively; there is no automatic fallback.
+                            Web Player requires an externally supplied anonymous session and may break
+                            when Spotify changes its unsupported internal API.
+                        </div>
+                    </div>
                     <div class="fieldDescription" style="margin-bottom:1em;">
                         Create an app in the <a href="https://developer.spotify.com/dashboard"
                         target="_blank" rel="noopener noreferrer">Spotify Developer Dashboard</a>.
@@ -146,6 +158,7 @@
                 .addEventListener('pageshow', () => {
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(SpotifyConfig.pluginUniqueId).then((config) => {
+                        document.querySelector('#CatalogSource').value = config.CatalogSource;
                         document.querySelector('#ClientId').value = config.ClientId;
                         document.querySelector('#ClientSecret').value = config.ClientSecret;
                         document.querySelector('#Market').value = config.Market;
@@ -169,6 +182,7 @@
                 .addEventListener('submit', (e) => {
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(SpotifyConfig.pluginUniqueId).then((config) => {
+                        config.CatalogSource = document.querySelector('#CatalogSource').value;
                         config.ClientId = document.querySelector('#ClientId').value.trim();
                         config.ClientSecret = document.querySelector('#ClientSecret').value;
                         config.Market = document.querySelector('#Market').value.trim().toUpperCase();

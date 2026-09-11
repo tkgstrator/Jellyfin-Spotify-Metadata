@@ -4,6 +4,7 @@ using System.Net.Http;
 using Jellyfin.Plugin.Spotify.Catalog;
 using Jellyfin.Plugin.Spotify.Catalog.Caching;
 using Jellyfin.Plugin.Spotify.Catalog.Throttling;
+using Jellyfin.Plugin.Spotify.Catalog.WebPlay;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
@@ -40,10 +41,22 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
             provider.GetRequiredService<ICatalogCache>(),
             provider.GetRequiredService<ILoggerFactory>()));
 
-        serviceCollection.AddSingleton<ISpotifyCatalog>(provider => new SpotifyCatalog(
-            provider.GetRequiredService<ICatalogTransport>(),
-            CurrentOptions,
-            provider.GetRequiredService<ILogger<SpotifyCatalog>>()));
+        serviceCollection.AddSingleton<IWebPlaySessionProvider, UnavailableWebPlaySessionProvider>();
+        serviceCollection.AddSingleton<IWebPlayTransport>(provider => new WebPlayTransport(
+            CreateHttpClient(provider),
+            provider.GetRequiredService<IWebPlaySessionProvider>(),
+            provider.GetRequiredService<ILogger<WebPlayTransport>>()));
+
+        serviceCollection.AddSingleton<ISpotifyCatalog>(provider => new SpotifyCatalogResolver(
+            new SpotifyCatalog(
+                provider.GetRequiredService<ICatalogTransport>(),
+                CurrentOptions,
+                provider.GetRequiredService<ILogger<SpotifyCatalog>>()),
+            new WebPlayCatalog(
+                provider.GetRequiredService<IWebPlayTransport>(),
+                CurrentOptions,
+                provider.GetRequiredService<ILogger<WebPlayCatalog>>()),
+            CurrentCatalogSource));
     }
 
     /// <summary>
@@ -78,6 +91,9 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     /// <returns>The current catalog options.</returns>
     public static CatalogOptions CurrentOptions()
         => Plugin.Instance?.Configuration.ToCatalogOptions() ?? new CatalogOptions();
+
+    private static CatalogSource CurrentCatalogSource()
+        => Plugin.Instance?.Configuration.CatalogSource ?? CatalogSource.Official;
 
     private static SpotifyCredentials CurrentCredentials()
         => new(

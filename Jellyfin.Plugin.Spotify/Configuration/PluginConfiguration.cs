@@ -54,8 +54,8 @@ public class PluginConfiguration : BasePluginConfiguration
     public int MaxSearchResults { get; set; }
 
     /// <summary>
-    /// Gets or sets the edge length in pixels used when resolving Spotify
-    /// artwork URL templates.
+    /// Gets or sets the preferred edge length in pixels used when choosing
+    /// among Spotify artwork images.
     /// </summary>
     public int ArtworkSize { get; set; }
 
@@ -66,9 +66,8 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>
     /// Gets or sets the minimum time between two catalog requests, in
-    /// milliseconds. Apple limits the search endpoint per IP address and keeps
-    /// refusing for a long time once tripped, so requests are never sent in
-    /// parallel and are spaced out by at least this much.
+    /// milliseconds. Requests are serialized and spaced out by at least this
+    /// much to reduce the chance of rate limiting.
     /// </summary>
     public int RequestIntervalMilliseconds { get; set; }
 

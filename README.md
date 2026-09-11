@@ -8,19 +8,25 @@ Jellyfin に保存するプラグイン。
 
 ## 現状
 
-Spotify Web API への認証 transport まで実装済み。まだ DTO とカタログの
-デシリアライズ、メタデータ / 画像プロバイダは無いため、**この段階では Jellyfin の
-メタデータ取得元には現れない**。
+Spotify Web API の認証・通信に加え、公式レスポンスの DTO とカタログ変換まで実装済み。
+メタデータ / 画像プロバイダはまだ無いため、**この段階では Jellyfin のメタデータ取得元
+には現れない**。
 
 | 層 | 状態 |
 | --- | --- |
 | プラグイン本体（設定画面、DI） | 動く |
 | Client Credentials のトークン取得・期限前更新・401 時の再取得 | 動く |
 | Web API transport（404 / 401 / 403 / 429、`Retry-After`） | 動く |
+| track / album / artist の DTO、検索・ID 引き、album tracks のページング | 動く |
+| 固定サイズ画像配列からのアートワーク選択 | 動く |
 | 外部 ID（曲・アルバム・アーティスト）と open.spotify.com のリンク | 動く |
 | 応答キャッシュ（バイト単位の LRU + ディスク + 同時リクエストの束ね） | 動く |
 | スロットル（直列化・間隔・429 のクールダウン） | 動く |
-| DTO / カタログ / メタデータ・画像プロバイダ | 未着手 |
+| メタデータ・画像プロバイダ | 未着手 |
+
+Web Player が内部利用する検索 API の 2026-09-11 時点の静的解析結果は
+[docs/research/webplay-search.md](docs/research/webplay-search.md) に記録している。非公開仕様
+であるため、persisted-query hash や token bootstrap を安定した契約とはみなさない。
 
 ## Spotify アプリの用意
 
@@ -51,12 +57,9 @@ CachingCatalogTransport
 
 ## 次に実装するもの
 
-1. Spotify 公式レスポンスの DTO（track / album / artist / search / paging）
-2. `SpotifyCatalog`（検索と ID 引き、album tracks のページング）
-3. Album / Artist / Song の metadata provider
-4. Album / Artist の image provider。Spotify は URL テンプレートではなく固定サイズの
-   画像配列を返すので、設定サイズに最も近いものを選ぶ
-5. ISRC と UPC を外部 ID として使うか決める
+1. Album / Artist / Song の metadata provider
+2. Album / Artist の image provider
+3. ISRC と UPC を外部 ID として使うか決める
 
 ## ビルド・テスト
 

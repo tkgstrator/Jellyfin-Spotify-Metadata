@@ -48,7 +48,11 @@ Jellyfin.Plugin.Spotify/
     Caching/                 byte-budget LRU, disk cache, in-flight coalescing
     Throttling/              serialisation, interval, cooldown
     ICatalogTransport.cs     raw JSON contract
-    ISpotifyCatalog.cs       lookup contract; generic until DTOs are fixed
+    ISpotifyCatalog.cs       track / album / artist lookup contract
+    SpotifyCatalog.cs        official DTO parsing, search, ID lookup, paging
+    Models/                  transport-independent catalog models
+    Official/                Spotify Web API response DTOs
+    ArtworkSelector.cs       nearest fixed-size image selection
   ExternalIds/              3 IExternalId + open.spotify.com links
 tests/Jellyfin.Plugin.Spotify.Tests/
 ```
@@ -72,8 +76,13 @@ Spotify は `Retry-After` を返すので、Apple 版の推測 cooldown より�
 先頭 2 文字で shard する。SQLite は Jellyfin の native dependency と衝突する恐れが
 あるため使わない。
 
-**アートワークは固定 URL の配列。** Apple の `{w}x{h}` template ではない。DTO を
-実装するときは設定サイズに最も近い image を選び、音声ファイルには埋め込まない。
+**アートワークは固定 URL の配列。** URL template ではない。`ArtworkSelector` が
+設定サイズに最も近い image を選ぶ。音声ファイルには埋め込まない。
+
+**Web Player の検索経路は非公開仕様。** 2026-09-11 の静的解析結果は
+[docs/research/webplay-search.md](docs/research/webplay-search.md) に記録した。persisted-query
+hash、TOTP、schema、header、client version は変更され得る。巨大 bundle や secret の
+実値は保存しない。
 
 ## ビルド・テスト
 

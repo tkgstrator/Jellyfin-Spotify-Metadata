@@ -64,16 +64,15 @@ Debug ビルドしたうえで `$JELLYFIN_CONFIG_DIR/plugins/Jellyfin.Plugin.Spo
 
 1. <http://localhost:8096> にアクセス（初回はセットアップウィザード）
 2. ダッシュボード → プラグイン に `Spotify` が出ること
-3. ダッシュボード → プラグイン → Spotify で設定できること
-4. 音楽ライブラリを追加してスキャンし、アルバム/曲に Spotify の ID が付くこと
-5. 設定画面の **Preview moves** で移動予定が出て、**Apply moves now** で
-   `Artist-[amid-id]/Album-[amid-id]/01 Title.ext` に並ぶこと。再スキャン後のログに
-   `Searching` が出ず `Looking up ... by` だけになること
+3. ダッシュボード → プラグイン → Spotify で設定画面が開き、保存できること
+
+メタデータ・画像プロバイダが追加されたら、音楽ライブラリのスキャンによる ID・
+メタデータ・アートワークの取得もここへ確認項目として追加する。
 
 ログ:
 
 ```bash
-docker logs -f --tail 200 applemusic-jellyfin
+docker logs -f --tail 200 spotify-jellyfin
 ```
 
 プラグインのログを増やしたい場合は Jellyfin の `logging.json` で

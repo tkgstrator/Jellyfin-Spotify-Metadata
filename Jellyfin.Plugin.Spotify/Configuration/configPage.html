@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Spotify</title>
+</head>
+<body>
+    <div id="SpotifyConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+         data-require="emby-input,emby-button,emby-select,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="SpotifyConfigForm">
+                    <h2>Spotify API</h2>
+                    <div class="fieldDescription" style="margin-bottom:1em;">
+                        Create an app in the <a href="https://developer.spotify.com/dashboard"
+                        target="_blank" rel="noopener noreferrer">Spotify Developer Dashboard</a>.
+                        The plugin uses the client credentials flow: no listener signs in, and no
+                        refresh token or Spotify account data is stored. Credentials stay in
+                        Jellyfin's plugin configuration and are never sent anywhere but Spotify.
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ClientId">Client ID</label>
+                        <input id="ClientId" name="ClientId" type="text" is="emby-input"
+                               autocomplete="off" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ClientSecret">Client secret</label>
+                        <input id="ClientSecret" name="ClientSecret" type="password" is="emby-input"
+                               autocomplete="new-password" />
+                    </div>
+
+                    <h2>Catalog</h2>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="Market">Market</label>
+                        <input id="Market" name="Market" type="text" is="emby-input"
+                               maxlength="2" placeholder="JP" />
+                        <div class="fieldDescription">
+                            ISO country code used for availability and track relinking. Spotify ids
+                            are global, so this does not scope the saved id.
+                        </div>
+                    </div>
+
+                    <h2>Requests</h2>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="MaxSearchResults">Max search results</label>
+                        <input id="MaxSearchResults" name="MaxSearchResults" type="number" is="emby-input"
+                               min="1" max="100" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="ArtworkSize">Artwork size (px)</label>
+                        <input id="ArtworkSize" name="ArtworkSize" type="number" is="emby-input"
+                               min="100" max="5000" />
+                        <div class="fieldDescription">
+                            Edge length substituted into the Spotify artwork URL template.
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="RequestTimeoutSeconds">
+                            Request timeout (seconds)
+                        </label>
+                        <input id="RequestTimeoutSeconds" name="RequestTimeoutSeconds" type="number"
+                               is="emby-input" min="1" max="300" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="RequestIntervalMilliseconds">
+                            Minimum interval between requests (ms)
+                        </label>
+                        <input id="RequestIntervalMilliseconds" name="RequestIntervalMilliseconds" type="number"
+                               is="emby-input" min="0" max="60000" step="100" />
+                        <div class="fieldDescription">
+                            Spotify may rate-limit the Web API per application, so requests are paced and never run in parallel; the
+                            limit is hit. Requests are sent one at a time, at least this far apart. Raise it if
+                            the log reports rate limiting.
+                        </div>
+                    </div>
+
+                    <h2>Cache</h2>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="EnableCache" name="EnableCache" type="checkbox" is="emby-checkbox" />
+                            <span>Cache catalog responses</span>
+                        </label>
+                        <div class="fieldDescription">
+                            Stores responses on disk so the same track, album or artist is not looked
+                            up twice. Strongly recommended: a library scan would otherwise repeat the
+                            same album query once per track.
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="CacheLifetimeDays">
+                            Cache lifetime (days)
+                        </label>
+                        <input id="CacheLifetimeDays" name="CacheLifetimeDays" type="number"
+                               is="emby-input" min="1" max="3650" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="CacheNotFoundLifetimeHours">
+                            Remember "not found" for (hours)
+                        </label>
+                        <input id="CacheNotFoundLifetimeHours" name="CacheNotFoundLifetimeHours"
+                               type="number" is="emby-input" min="1" max="8760" />
+                        <div class="fieldDescription">
+                            Kept shorter than the cache lifetime, since a track missing today may be
+                            added to the catalog tomorrow.
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="MaxCacheMemoryMegabytes">
+                            Memory budget (MB)
+                        </label>
+                        <input id="MaxCacheMemoryMegabytes" name="MaxCacheMemoryMegabytes" type="number"
+                               is="emby-input" min="1" max="4096" />
+                        <div class="fieldDescription">
+                            Upper bound on the memory the cache may use. Least recently used entries
+                            are dropped once it is reached, so a large library cannot grow it without
+                            limit.
+                        </div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="MaxPersistedEntryKilobytes">
+                            Largest entry written to disk (KB)
+                        </label>
+                        <input id="MaxPersistedEntryKilobytes" name="MaxPersistedEntryKilobytes"
+                               type="number" is="emby-input" min="0" max="1024" />
+                        <div class="fieldDescription">
+                            Responses above this size stay in memory only. Search responses run to
+                            about 31 KB and are rarely repeated once an id is known, whereas id
+                            lookups are around 1.5 KB and repeat often — the default of 8 KB keeps
+                            the useful ones on disk and the bulky ones off it.
+                        </div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var SpotifyConfig = {
+                pluginUniqueId: 'a9aa1b5c-3fd8-4836-9b72-473231330d9e'
+            };
+
+            document.querySelector('#SpotifyConfigPage')
+                .addEventListener('pageshow', () => {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(SpotifyConfig.pluginUniqueId).then((config) => {
+                        document.querySelector('#ClientId').value = config.ClientId;
+                        document.querySelector('#ClientSecret').value = config.ClientSecret;
+                        document.querySelector('#Market').value = config.Market;
+                        document.querySelector('#MaxSearchResults').value = config.MaxSearchResults;
+                        document.querySelector('#ArtworkSize').value = config.ArtworkSize;
+                        document.querySelector('#RequestTimeoutSeconds').value = config.RequestTimeoutSeconds;
+                        document.querySelector('#RequestIntervalMilliseconds').value =
+                            config.RequestIntervalMilliseconds;
+                        document.querySelector('#EnableCache').checked = config.EnableCache;
+                        document.querySelector('#CacheLifetimeDays').value = config.CacheLifetimeDays;
+                        document.querySelector('#CacheNotFoundLifetimeHours').value =
+                            config.CacheNotFoundLifetimeHours;
+                        document.querySelector('#MaxCacheMemoryMegabytes').value = config.MaxCacheMemoryMegabytes;
+                        document.querySelector('#MaxPersistedEntryKilobytes').value =
+                            config.MaxPersistedEntryKilobytes;
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+                });
+
+                });
+
+            document.querySelector('#SpotifyConfigForm')
+                .addEventListener('submit', (e) => {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(SpotifyConfig.pluginUniqueId).then((config) => {
+                        config.ClientId = document.querySelector('#ClientId').value.trim();
+                        config.ClientSecret = document.querySelector('#ClientSecret').value;
+                        config.Market = document.querySelector('#Market').value.trim().toUpperCase();
+                        config.MaxSearchResults = parseInt(document.querySelector('#MaxSearchResults').value, 10);
+                        config.ArtworkSize = parseInt(document.querySelector('#ArtworkSize').value, 10);
+                        config.RequestTimeoutSeconds = parseInt(
+                            document.querySelector('#RequestTimeoutSeconds').value, 10);
+                        config.RequestIntervalMilliseconds = parseInt(
+                            document.querySelector('#RequestIntervalMilliseconds').value, 10);
+                        config.EnableCache = document.querySelector('#EnableCache').checked;
+                        config.CacheLifetimeDays = parseInt(
+                            document.querySelector('#CacheLifetimeDays').value, 10);
+                        config.CacheNotFoundLifetimeHours = parseInt(
+                            document.querySelector('#CacheNotFoundLifetimeHours').value, 10);
+                        config.MaxCacheMemoryMegabytes = parseInt(
+                            document.querySelector('#MaxCacheMemoryMegabytes').value, 10);
+                        config.MaxPersistedEntryKilobytes = parseInt(
+                            document.querySelector('#MaxPersistedEntryKilobytes').value, 10);
+                        ApiClient.updatePluginConfiguration(SpotifyConfig.pluginUniqueId, config)
+                            .then((result) => {
+                                Dashboard.processPluginConfigurationUpdateResult(result);
+                            });
+                    });
+
+                    e.preventDefault();
+                    return false;
+                });
+        </script>
+    </div>
+</body>
+</html>

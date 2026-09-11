@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Jellyfin.Plugin.Spotify/Jellyfin.Plugin.Spotify.csproj" />
+  <Project Path="tests/Jellyfin.Plugin.Spotify.Tests/Jellyfin.Plugin.Spotify.Tests.csproj" />
+</Solution>

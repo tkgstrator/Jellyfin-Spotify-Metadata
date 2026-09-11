@@ -1,0 +1,15 @@
+{
+  "category": "Metadata",
+  "guid": "a9aa1b5c-3fd8-4836-9b72-473231330d9e",
+  "name": "Spotify",
+  "overview": "Spotify metadata and artwork for tracks, albums and artists.",
+  "description": "Fetches track, album and artist metadata and artwork from the Spotify catalog. Uses the Spotify Web API with a configurable market.",
+  "owner": "tkgstrator",
+  "targetAbi": "__TARGET_ABI__",
+  "version": "__VERSION__",
+  "timestamp": "__TIMESTAMP__",
+  "changelog": "__CHANGELOG__",
+  "status": 0,
+  "autoUpdate": true,
+  "imagePath": ""
+}

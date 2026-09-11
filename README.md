@@ -8,9 +8,10 @@ Jellyfin に保存するプラグイン。
 
 ## 現状
 
-Spotify Web API の認証・通信に加え、公式レスポンスの DTO とカタログ変換まで実装済み。
-メタデータ / 画像プロバイダはまだ無いため、**この段階では Jellyfin のメタデータ取得元
-には現れない**。
+公式 Spotify Web API による検索・ID 引きと、曲・アルバム・アーティストの
+メタデータ取得、アルバム・アーティストの画像取得まで実装済み。Web Player の内部
+GraphQL 検索経路も実装しているが、匿名 token bootstrap は Spotify の非公開 TOTP 材料に
+依存するため、安全に取得できる実装が追加されるまでは利用できない。
 
 | 層 | 状態 |
 | --- | --- |
@@ -22,7 +23,9 @@ Spotify Web API の認証・通信に加え、公式レスポンスの DTO と�
 | 外部 ID（曲・アルバム・アーティスト）と open.spotify.com のリンク | 動く |
 | 応答キャッシュ（バイト単位の LRU + ディスク + 同時リクエストの束ね） | 動く |
 | スロットル（直列化・間隔・429 のクールダウン） | 動く |
-| メタデータ・画像プロバイダ | 未着手 |
+| Album / Artist / Song metadata provider | 動く |
+| Album / Artist image provider | 動く |
+| Web Player GraphQL 検索 adapter | 実装済み（匿名 session bootstrap は未実装） |
 
 Web Player が内部利用する検索 API の 2026-09-11 時点の静的解析結果は
 [docs/research/webplay-search.md](docs/research/webplay-search.md) に記録している。非公開仕様
@@ -30,9 +33,10 @@ Web Player が内部利用する検索 API の 2026-09-11 時点の静的解析�
 
 ## Spotify アプリの用意
 
-[Spotify Developer Dashboard][dashboard] でアプリを作り、設定画面に Client ID と
-Client secret を入れる。プラグインは [Client Credentials flow][client-credentials]
-を使う。
+設定画面の catalog source で **Official Web API** を選ぶ。[Spotify Developer
+Dashboard][dashboard] でアプリを作り、Client ID と Client secret を入力する。プラグインは
+[Client Credentials flow][client-credentials] を使う。Web Player は実験的な選択肢だが、
+現時点では匿名 session bootstrap が未実装のため実用できない。
 
 - 読むのは公開カタログだけなので、リスナーのログインや OAuth コールバックは不要
 - refresh token は無い。約 1 時間の access token を期限の 1 分前に取り直す
@@ -55,11 +59,11 @@ CachingCatalogTransport
 - 403 は資格情報のエラーとして返す
 - 429 は `Retry-After` を読み、キャッシュには残さずスロットルへ伝える
 
-## 次に実装するもの
+## 未実装・要検討
 
-1. Album / Artist / Song の metadata provider
-2. Album / Artist の image provider
-3. ISRC と UPC を外部 ID として使うか決める
+1. Web Player の匿名 session bootstrap
+2. Web Player の公式に確認できない ID lookup（現状は検索結果の ID 完全一致）
+3. ISRC と UPC を外部 ID として使うか
 
 ## ビルド・テスト
 

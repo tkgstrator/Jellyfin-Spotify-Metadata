@@ -15,12 +15,12 @@ PLUGIN_NAME="Jellyfin.Plugin.Spotify"
 if [ "${1:-}" = "--legacy" ]; then
   TFM="net9.0"
   CONFIG_DIR="${JELLYFIN_LEGACY_CONFIG_DIR:-/jellyfin/config-legacy}"
-  CONTAINER="${JELLYFIN_LEGACY_CONTAINER:-applemusic-jellyfin-legacy}"
+  CONTAINER="${JELLYFIN_LEGACY_CONTAINER:-spotify-jellyfin-legacy}"
   LABEL="Jellyfin 10.11"
 else
   TFM="net10.0"
   CONFIG_DIR="${JELLYFIN_CONFIG_DIR:-/jellyfin/config}"
-  CONTAINER="${JELLYFIN_CONTAINER:-applemusic-jellyfin}"
+  CONTAINER="${JELLYFIN_CONTAINER:-spotify-jellyfin}"
   LABEL="Jellyfin 12.0"
 fi
 
